@@ -191,4 +191,4 @@ Ensuite, lorsque qu'on a promote notre taskflow, on peut voir que le taskflow va
 ![alt text](image-28.png)
 ![alt text](image-29.png)
 
-Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible
+Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible, en observant cela nous pouvons facilement en conclure que l'utilisation de Canary est moins coûteuse que Bluegreen, rien n'est doublé, les états précédents sont progressivement écrasés, par contre le temps est bien plus long.
