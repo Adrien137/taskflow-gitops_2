@@ -122,7 +122,6 @@ taskflow         → version=1.0.0 http=200
 taskflow-preview → version=1.1.0 http=200
 
 CAPTURE : ![alt text](image-18.png)
-CAPTURE : ![alt text](image-18.png)
 
 Voici ce qu'il se passe lors de l'observation après le promote du taskflow rollout : 
 ![alt text](image-19.png)
@@ -148,7 +147,7 @@ J'ai donc installé le CLI puis utilisé :
 Résultat :
 rollout 'taskflow' promoted
 
-[CAPTURE : ![alt text](image-21.png) ]
+CAPTURE : ![alt text](image-21.png)
 
 Résultat final
 Après promotion :
@@ -161,11 +160,12 @@ Status:   Healthy
 Strategy: BlueGreen
 Image:    taskflow:1.1.0 (stable, active)
 
-[CAPTURE : ![alt text](image-22.png)]
+CAPTURE : ![alt text](image-22.png)
 
 Conclusion
 
 Le Blue-Green a permis de tester la 1.1.0 sans impacter la 1.0.0 en production, puis de basculer vers la nouvelle version après validation.
 
 L'avantage principal est la réduction du risque lors du déploiement. En revanche, pendant la phase de test, 8 pods étaient nécessaires au lieu de 4, ce qui augmente temporairement la consommation de ressources.
+
 
