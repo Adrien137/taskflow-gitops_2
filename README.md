@@ -166,7 +166,7 @@ Conclusion
 
 Le Blue-Green a permis de tester la 1.1.0 sans impacter la 1.0.0 en production, puis de basculer vers la nouvelle version après validation.
 
-L'avantage principal est la réduction du risque lors du déploiement. En revanche, pendant la phase de test, 8 pods étaient nécessaires au lieu de 4, ce qui augmente temporairement la consommation de ressources.
+L'avantage principal est la réduction du risque lors du déploiement. En revanche, pendant la phase de test, 8 pods étaient nécessaires au lieu de 4, ce qui augmente temporairement la consommation de ressources mais egalement le coût est par conséquent doublé.
 
 
 # Rendu TP CANARY - TaskFlow 1.1.0
@@ -191,4 +191,4 @@ Ensuite, lorsque qu'on a promote notre taskflow, on peut voir que le taskflow va
 ![alt text](image-28.png)
 ![alt text](image-29.png)
 
-Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible
+Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible, en observant cela nous pouvons facilement en conclure que l'utilisation de Canary est moins coûteuse que Bluegreen, rien n'est doublé, les états précédents sont progressivement écrasés, par contre le temps est bien plus long.
