@@ -191,4 +191,4 @@ Ensuite, lorsque qu'on a promote notre taskflow, on peut voir que le taskflow va
 ![alt text](image-28.png)
 ![alt text](image-29.png)
 
-Cela prouve qu'il a pris la prio sur l'ancienne version
+Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible
