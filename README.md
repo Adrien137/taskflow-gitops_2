@@ -52,4 +52,8 @@ Il peut être relancé sans risque.
 - Push de mon code depuis la branch dev (vérifier le fonctionnement ) pour ensuite crée une pull request vers main: 
 ![alt text](image-2.png)
 
--
+- Synced + Health :
+![alt text](image-3.png)
+
+- Vérification du fonctionnement grâce au script Observe.sh depuis Git bash :
+![alt text](image-4.png)
