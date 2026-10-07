@@ -171,7 +171,7 @@ L'avantage principal est la réduction du risque lors du déploiement. En revanc
 
 # Rendu TP CANARY - TaskFlow 1.1.0
 
-Fonctionnement de canary en remplacent les ancien fichiers rollout par ceux de canary :
+Fonctionnement de canary en remplacent les ancien fichiers rollout par ceux de canary et regarder les changement de version en direct sur le taskflows :
 
 ![alt text](image-24.png)
 
@@ -179,14 +179,16 @@ On modifie la version de l'image utilisé par le taskflow :
 
 ![alt text](image-25.png)
 
-
 Lorsqu'on utilise le script d'observe.sh voici ce qu nous voyons : 
+
 ![alt text](image-26.png)
 
-cela prouve que nos 2 version sont bien pris en compte,
+Cela prouve que nos 2 version on et sont bien pris en compte.
 
 Ensuite, lorsque qu'on a promote notre taskflow, on peut voir que le taskflow va prendre plus de pod au lieu de se limiter a 1 seul, il commence a récupérer les autre, jusqu'a tout récupérer a 100% : 
 
 ![alt text](image-27.png)
 ![alt text](image-28.png)
 ![alt text](image-29.png)
+
+Cela prouve qu'il a pris la prio sur l'ancienne version
