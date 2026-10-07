@@ -38,4 +38,18 @@ Il peut être relancé sans risque.
 ## Équipe
 
 <!-- Noms du binôme -->
-- À compléter
+-Adrien 
+-Ewan
+
+## Rendu : 
+
+- Ajout du repo github a l'application ArgoCD :
+![alt text](image.png)
+
+- Pod kube running : 
+![alt text](image-1.png)
+
+- Push de mon code depuis la branch dev (vérifier le fonctionnement ) pour ensuite crée une pull request vers main: 
+![alt text](image-2.png)
+
+-
