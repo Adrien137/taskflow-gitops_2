@@ -96,8 +96,76 @@ verification du changement de l'image et de l'etat des taskflow:
 ![alt text](image-15.png)
 
 
-# Rendu TP BlueGreen/Canary
+# Rendu TP Blue-Green — TaskFlow 1.0.0 → 1.1.0
+
+Le Deployment classique a été remplacé par un Rollout Blue-Green avec deux services :
+- taskflow → version active en production
+- taskflow-preview → nouvelle version à tester
 
 Remplacement du fichier deployment par rollout : 
 ![alt text](image-16.png)
+
+Comme on peut le voir dans cette capture, notre fichier rollout et bien reconue et l'ancien ( deployment) n'existe plus du tout :
+![alt text](image-17.png)
+
+
+Après le déploiement de la 1.1.0, les deux versions fonctionnaient en parallèle :
+taskflow          → 1.0.0 → 4 pods
+taskflow-preview  → 1.1.0 → 4 pods
+
+Vérification avec :
+./scripts/observe.sh taskflow 40
+./scripts/observe.sh taskflow-preview 40
+
+Résultat :
+taskflow         → version=1.0.0 http=200
+taskflow-preview → version=1.1.0 http=200
+
+CAPTURE : ![alt text](image-18.png)
+CAPTURE : ![alt text](image-18.png)
+
+Voici ce qu'il se passe lors de l'observation après le promote du taskflow rollout : 
+![alt text](image-19.png)
+![alt text](image-20.png)
+
+Problèmes rencontrés et corrections
+
+La commande de promotion ne fonctionnait pas pour moi,
+
+La commande :
+kubectl argo rollouts promote taskflow -n taskflow
+
+retournait :
+error: unknown command "argo" for "kubectl"
+
+![alt text](image-23.png)
+
+Le contrôleur Argo Rollouts était installé dans Kubernetes, mais pas le CLI Argo Rollouts sur Windows.
+
+J'ai donc installé le CLI puis utilisé :
+.\kubectl-argo-rollouts.exe promote taskflow -n taskflow
+
+Résultat :
+rollout 'taskflow' promoted
+
+[CAPTURE : ![alt text](image-21.png) ]
+
+Résultat final
+Après promotion :
+
+1.1.0 → stable, active → 4 pods
+1.0.0 → ScaledDown
+
+Le Rollout est passé en :
+Status:   Healthy
+Strategy: BlueGreen
+Image:    taskflow:1.1.0 (stable, active)
+
+[CAPTURE : ![alt text](image-22.png)]
+
+Conclusion
+
+Le Blue-Green a permis de tester la 1.1.0 sans impacter la 1.0.0 en production, puis de basculer vers la nouvelle version après validation.
+
+L'avantage principal est la réduction du risque lors du déploiement. En revanche, pendant la phase de test, 8 pods étaient nécessaires au lieu de 4, ce qui augmente temporairement la consommation de ressources.
 
