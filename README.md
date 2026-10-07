@@ -96,3 +96,8 @@ verification du changement de l'image et de l'etat des taskflow:
 ![alt text](image-15.png)
 
 
+# Rendu TP BlueGreen/Canary
+
+Remplacement du fichier deployment par rollout : 
+![alt text](image-16.png)
+
