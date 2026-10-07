@@ -37,37 +37,62 @@ Il peut être relancé sans risque.
 
 ## Équipe
 
-<!-- Noms du binôme -->
--Adrien 
--Ewan
+- Adrien
+
+- Ewan
 
 ## Rendu : 
 
-- Ajout du repo github a l'application ArgoCD :
+Ajout du repo github a l'application ArgoCD :
+
 ![alt text](image.png)
 
-- Pod kube running : 
+Pod kube running : 
+
 ![alt text](image-1.png)
 
-- Push de mon code depuis la branch dev (vérifier le fonctionnement ) pour ensuite crée une pull request vers main: 
+Push de mon code depuis la branch dev (vérifier le fonctionnement ) pour ensuite crée une pull request vers main: 
+
 ![alt text](image-2.png)
 
-- Synced + Health :
+Synced + Health :
+
 ![alt text](image-3.png)
 
-- Vérification du fonctionnement grâce au script Observe.sh depuis Git bash :
+Vérification du fonctionnement grâce au script Observe.sh depuis Git bash :
+
 ![alt text](image-4.png)
 
-- L'image a bien été changé automatiquement par argocd ( les pod con crée et terminer pour les remplacer par les nouveau ) :
+L'image a bien été changé automatiquement par argocd ( les pod con crée et terminer pour les remplacer par les nouveau ) :
+
 ![alt text](image-5.png)
 ![alt text](image-6.png)
 
-- Replicas du nombre de 4 : 
+Replicas du nombre de 4 :
+
 ![alt text](image-7.png)
 
 Dérive sur le nombre de replicas :
+
 ![alt text](image-8.png)
 
 Changement de la version de l'image valide puis detection automatique de ArgoCD qui remet sous la bonne version ( verification du health status) :
+
 ![alt text](image-9.png)
 ![alt text](image-10.png)
+
+Revert de l'upgrade de version et verification du revert de l'image :
+
+![alt text](image-11.png)
+
+Argo cd à procéder au rollback en prenant en compte notre revert :
+
+![alt text](image-13.png)
+
+verification du changement de l'image et de l'etat des taskflow:
+
+![alt text](image-12.png)
+![alt text](image-14.png)
+![alt text](image-15.png)
+
+
