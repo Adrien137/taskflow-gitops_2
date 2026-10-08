@@ -192,3 +192,110 @@ Ensuite, lorsque qu'on a promote notre taskflow, on peut voir que le taskflow va
 ![alt text](image-29.png)
 
 Cela prouve qu'il a pris la place de la version stable et que l'ancienne version n'est plus disponible, en observant cela nous pouvons facilement en conclure que l'utilisation de Canary est moins coûteuse que Bluegreen, rien n'est doublé, les états précédents sont progressivement écrasés, par contre le temps est bien plus long.
+
+# Rendu ABORT AUTOMATIQUE ET ANALYSISRUN
+
+## Tests de charge et validation du Canary avec k6
+
+### 1. Vérification de la charge sur TaskFlow
+
+Nous avons exécuté le script `charge.sh` afin de générer du trafic sur TaskFlow et d'observer le comportement de l'application.
+
+Pendant le test, nous avons également surveillé les pods Kubernetes afin de visualiser leur création et leur suppression lors des opérations de déploiement.
+
+![alt text](image-30.png)
+
+![alt text](image-31.png)
+
+Les premiers résultats k6 sont satisfaisants :
+
+- **Latence p95 :** 6,56 ms.
+- **Erreurs HTTP :** 0 %.
+- **Seuils k6 :** tous respectés.
+
+![alt text](image-32.png)
+
+![alt text](image-34.png)
+
+![alt text](image-33.png)
+
+### 2. Déploiement de la version 2.1.0
+
+Nous avons ensuite modifié l'image Docker dans `rollout.yaml` afin de passer de la version `2.0.0` à `2.1.0`.
+
+Après synchronisation par Argo CD, le déploiement Canary s'est terminé avec succès.
+
+![alt text](image-35.png)
+
+![alt text](image-36.png)
+
+L'AnalysisRun automatique a retourné le statut `Successful`, avec 0 % d'erreurs HTTP et une latence p95 de 7,82 ms.
+
+Ce résultat était surprenant, car la version 2.1.0 devait présenter des problèmes de performance.
+
+### 3. Identification du problème avec k6
+
+Pour vérifier le comportement réel de la version 2.1.0, nous avons lancé manuellement :
+
+```bash
+./scripts/charge.sh http://taskflow-canary
+```
+
+Cette fois, les résultats montrent que l'application ne respecte pas les seuils :
+
+| Indicateur | Seuil attendu | Résultat |
+|---|---|---|
+| Erreurs HTTP | Moins de 2 % | 28 % |
+| Latence p95 | Moins de 250 ms | 306,89 ms |
+
+![alt text](image-37.png)
+
+La version 2.1.0 présente donc une dégradation importante, qui n'avait pas été détectée lors du premier AnalysisRun.
+
+### 4. Modification de la configuration k6
+
+Nous avons modifié `apps/taskflow/configmap-k6.yaml` pour ajouter `abortOnFail: true` aux seuils de performance.
+
+```javascript
+thresholds: {
+  http_req_failed: [
+    { threshold: 'rate<0.02', abortOnFail: true, delayAbortEval: '5s' }
+  ],
+  http_req_duration: [
+    { threshold: 'p(95)<250', abortOnFail: true, delayAbortEval: '5s' }
+  ],
+},
+```
+
+Cette option permet à k6 d'interrompre son test plus rapidement lorsqu'un seuil échoue.
+
+Après avoir fusionné les modifications de `dev` vers `main`, Argo CD a synchronisé la nouvelle configuration.
+
+![alt text](image-38.png)
+
+### 5. Validation de l'abandon automatique
+
+Lors d'une nouvelle tentative de déploiement, k6 a détecté des dépassements de seuils :
+
+- **32 % d'erreurs HTTP**.
+- **307,18 ms de latence p95**.
+- **AnalysisRun :** `Failed`.
+
+Argo Rollouts a alors automatiquement interrompu le déploiement :
+
+```text
+Status: Degraded
+Message: RolloutAborted
+```
+
+![alt text](image-39.png)
+
+Cette capture confirme que le mécanisme d'abandon automatique fonctionne.
+
+Cependant, cet échec concernait une tentative de retour à `2.0.0`, tandis que `2.1.0` était encore la version stable.
+
+### Conclusion
+
+Ces tests ont permis de vérifier le fonctionnement de k6 et son intégration avec Argo Rollouts. Les dépassements de seuils peuvent entraîner un `AnalysisRun Failed`, puis un abandon automatique du déploiement.
+
+Cette approche permet de détecter les régressions de performance avant de généraliser une nouvelle version de l'application.
