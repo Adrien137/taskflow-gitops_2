@@ -49,13 +49,27 @@ jobs:
           #echo "Images à scanner :"
           #cat images.txt
         
-      - name: Scanner les images (PSSI-R5)
+        - name: Scanner les images (PSSI-R5)
         run: |
           status=0
-          while read -r image; do
+            while read -r image; do
             echo "::group::Trivy ${image}"
-            docker run --rm -v "$PWD:/work" -w /work aquasec/trivy:0.75.0 image \
-              --severity HIGH,CRITICAL --ignore-unfixed --ignorefile /work/.trivyignore--exit-code 1 "${image}" || status=1
-            echo "::endgroup::"
-          done < images.txt
-          exit "${status}"
+              docker run --rm -v "$PWD:/work" -w /work aquasec/trivy:0.75.0 image \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              --ignorefile /work/.trivyignore \
+              --exit-code 1 "${image}" || status=1
+              echo "::endgroup::"
+            done < images.txt
+          exit "${status}"  
+      
+   # - name: Scanner les images (PSSI-R5)
+    #    run: |
+     #     status=0
+      #    while read -r image; do
+       #     echo "::group::Trivy ${image}"
+        #    docker run --rm -v "$PWD:/work" -w /work aquasec/trivy:0.75.0 image \
+         #     --severity HIGH,CRITICAL --ignore-unfixed --ignorefile /work/.trivyignore--exit-code 1 "${image}" || status=1
+          #  echo "::endgroup::"
+          #done < images.txt
+          #exit "${status}"
