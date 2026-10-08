@@ -299,3 +299,207 @@ Cependant, cet échec concernait une tentative de retour à `2.0.0`, tandis que 
 Ces tests ont permis de vérifier le fonctionnement de k6 et son intégration avec Argo Rollouts. Les dépassements de seuils peuvent entraîner un `AnalysisRun Failed`, puis un abandon automatique du déploiement.
 
 Cette approche permet de détecter les régressions de performance avant de généraliser une nouvelle version de l'application.
+
+
+# TP 4 – Mise en place des Quality Gates de la mini-PSSI
+
+## 1. Objectif du TP
+
+L'objectif de ce TP est de mettre en place des contrôles de sécurité automatisés dans notre pipeline CI/CD GitHub Actions, afin de vérifier la conformité des manifestes Kubernetes et des images Docker avant leur intégration dans la branche `main`.
+
+Pour cela, nous utilisons deux outils :
+
+- **Conftest** : vérification des manifestes Kubernetes à partir de règles de sécurité écrites en Rego.
+- **Trivy** : analyse des images Docker afin de détecter les vulnérabilités de sévérité HIGH et CRITICAL.
+
+Ces contrôles sont intégrés dans un workflow GitHub Actions et rendus obligatoires à l'aide d'un Ruleset GitHub.
+
+## 2. Installation de Conftest et validation des règles R3 et R4
+
+Après avoir installé Conftest, nous avons complété les règles R3 et R4 dans le fichier `policies/kubernetes.rego`.
+
+Nous avons ensuite exécuté la commande suivante :
+
+```bash
+conftest test apps/ --policy policies/
+```
+
+Lors de cette première exécution, Conftest a détecté une non-conformité liée à la règle **PSSI-R4**.
+
+Cette règle impose que les conteneurs Kubernetes soient configurés pour ne pas s'exécuter en tant qu'utilisateur root.
+
+![alt text](image-40.png)
+
+### Correction de la non-conformité
+
+Pour respecter cette règle, nous avons modifié le fichier `apps/taskflow/rollout.yaml` en ajoutant le paramètre suivant au niveau de `spec.template.spec` :
+
+```yaml
+securityContext:
+  runAsNonRoot: true
+```
+
+Cette configuration impose l'exécution du conteneur avec un utilisateur non-root.
+
+![alt text](image-41.png)
+
+### Nouvelle validation Conftest
+
+Après cette modification, nous avons relancé la commande :
+
+```bash
+conftest test apps/ --policy policies/
+```
+
+Cette fois, les tests ont été validés avec succès :
+
+**25 tests exécutés, 25 réussis et 0 échec.**
+
+Cela confirme que nos manifestes respectent désormais les règles définies dans notre politique Rego.
+
+![alt text](image-42.png)
+
+## 3. Intégration des contrôles dans GitHub Actions
+
+Une fois les manifestes corrigés, nous avons intégré le workflow PSSI dans le fichier :
+
+`.github/workflows/pssi.yml`
+
+Ce workflow contient deux jobs :
+
+- **PSSI manifests (conftest)** : vérifie les manifestes Kubernetes avec les règles Rego R1 à R4.
+- **PSSI images (Trivy)** : analyse les images Docker TaskFlow pour identifier les vulnérabilités HIGH et CRITICAL.
+
+Nous avons ensuite envoyé nos modifications sur notre branche secondaire `dev`, puis créé une Pull Request vers `main`.
+
+```bash
+git add .
+git commit -m "feat: add PSSI quality gates"
+git push origin dev
+```
+
+### Configuration du Ruleset GitHub
+
+Nous avons configuré un Ruleset sur la branche `main` afin de rendre les deux jobs obligatoires avant toute fusion.
+
+Lors de notre première Pull Request, nous avons constaté que le contrôle Trivy signalait des vulnérabilités. La fusion était donc bloquée.
+
+Cela nous a également permis de vérifier que les contrôles obligatoires configurés dans le Ruleset étaient bien pris en compte.
+
+![alt text](image-43.png)
+
+## 4. Vérification des règles R1 et R2 avec une image non conforme
+
+Afin de vérifier que notre politique de sécurité bloque correctement les images non autorisées, nous avons volontairement modifié l'image utilisée dans notre Rollout Kubernetes.
+
+Nous avons remplacé l'image initiale par :
+
+```yaml
+image: nginx:latest
+```
+
+Cette modification permet de tester deux règles :
+
+- **PSSI-R1** : interdiction de l'utilisation du tag `latest`.
+- **PSSI-R2** : interdiction des images provenant d'un registre non autorisé.
+
+Nous avons ensuite relancé Conftest.
+
+### Résultat du test
+
+Le contrôle a détecté les deux non-conformités :
+
+- R1 : utilisation du tag `latest`.
+- R2 : utilisation d'une image ne provenant pas du registre autorisé.
+
+Le résultat était de **23 tests réussis et 2 tests échoués**.
+
+![alt text](image-44.png)
+
+Nous avons ensuite envoyé cette modification sur la branche `dev` pour observer le comportement de GitHub Actions.
+
+Dans notre Pull Request, le job **PSSI manifests (conftest)** est passé en échec, empêchant la fusion vers `main`.
+
+Les logs GitHub Actions indiquaient bien que le blocage provenait des règles R1 et R2.
+
+![alt text](image-45.png)
+
+![alt text](image-46.png)
+
+Ce test confirme que notre Quality Gate est capable d'empêcher l'intégration d'une configuration Kubernetes non conforme.
+
+## 5. Correction du Rollout et gestion des vulnérabilités Trivy
+
+Après avoir vérifié le fonctionnement des règles R1 et R2, nous avons réalisé deux opérations :
+
+1. Restaurer l'image Docker conforme dans notre Rollout.
+2. Créer un fichier `.trivyignore` pour documenter les exceptions temporaires aux vulnérabilités détectées.
+
+### Restauration de l'image conforme
+
+Nous avons remis l'image initiale dans le fichier `apps/taskflow/rollout.yaml` :
+
+```yaml
+image: ghcr.io/9m7fjfpv9k-cyber/taskflow:2.0.0
+```
+
+Cette image respecte les règles R1 et R2 puisqu'elle utilise un tag versionné et provient du registre autorisé.
+
+### Création du fichier .trivyignore
+
+Le scan Trivy avait détecté plusieurs vulnérabilités de sévérité HIGH dans les images analysées.
+
+Dans le cadre du TP, nous avons choisi de documenter des exceptions temporaires plutôt que de modifier immédiatement les images et leurs dépendances.
+
+Nous avons donc créé un fichier `.trivyignore` à la racine du dépôt.
+
+Ce fichier contient les identifiants CVE à exclure temporairement du contrôle, accompagnés d'une justification et d'une date de réévaluation.
+
+![alt text](image-48.png)
+
+Les exceptions couvrent les **10 identifiants CVE distincts** relevés dans nos derniers logs.
+
+Il est important de préciser que ces exceptions ne corrigent pas les vulnérabilités : elles permettent uniquement de les exclure temporairement du résultat bloquant de Trivy.
+
+Ces vulnérabilités devront être réévaluées et corrigées ultérieurement, notamment par la mise à jour des dépendances et des images concernées.
+
+## 6. Validation finale des Quality Gates
+
+Après avoir restauré l'image conforme et ajouté le fichier `.trivyignore`, nous avons envoyé les modifications sur la branche `dev`.
+
+Nous avons ensuite consulté notre Pull Request vers `main`.
+
+Cette fois, les deux jobs obligatoires ont été exécutés avec succès :
+
+- **PSSI images (Trivy)** : Successful, en 23 secondes.
+- **PSSI manifests (conftest)** : Successful, en 7 secondes.
+
+Les deux contrôles apparaissent également avec le statut **Required**, ce qui confirme leur intégration dans le Ruleset GitHub.
+
+![alt text](image-47.png)
+
+La fusion reste néanmoins bloquée tant qu'un collaborateur disposant des droits nécessaires n'a pas approuvé la Pull Request.
+
+Cette protection supplémentaire permet d'imposer une validation humaine en complément des contrôles automatisés.
+
+## 7. Tableau récapitulatif des règles de sécurité
+
+| Règle | Contrôle de sécurité | Outil | Preuve de validation |
+|---|---|---|---|
+| PSSI-R1 | Interdire les images utilisant le tag `latest` | Conftest / Rego | Échec du test avec `nginx:latest` |
+| PSSI-R2 | Autoriser uniquement les registres d'images définis dans la politique | Conftest / Rego | Blocage de l'image `nginx:latest` |
+| PSSI-R3 | Contrôle de conformité défini dans `kubernetes.rego` | Conftest / Rego | Validation lors des 25 tests réussis |
+| PSSI-R4 | Imposer `runAsNonRoot: true` dans le Rollout | Conftest / Rego | Échec initial, correction, puis validation |
+| PSSI-R5 | Détecter les vulnérabilités HIGH et CRITICAL des images analysées | Trivy | Scan GitHub Actions réussi avec exceptions documentées |
+
+## 8. Conclusion
+
+Ce TP nous a permis de mettre en place une politique de sécurité automatisée dans notre processus GitOps.
+
+Grâce à Conftest et aux règles Rego, nous avons pu détecter et corriger des configurations Kubernetes non conformes, notamment l'absence du paramètre `runAsNonRoot` et l'utilisation d'une image avec le tag `latest`.
+
+L'intégration de Trivy nous a également permis de contrôler les vulnérabilités des images Docker et de mettre en place une gestion documentée des exceptions temporaires.
+
+Enfin, la configuration du Ruleset GitHub garantit que les contrôles de sécurité doivent réussir avant toute fusion vers `main`, avec une approbation humaine supplémentaire.
+
+**Nous avons ainsi mis en place des Quality Gates fonctionnels permettant de renforcer la sécurité de notre pipeline CI/CD et de limiter l'introduction de configurations non conformes dans notre environnement Kubernetes.**
