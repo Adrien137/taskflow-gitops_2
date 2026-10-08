@@ -29,11 +29,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Lister les images TaskFlow déployées
+      #- name: Lister les images TaskFlow déployées
+      - name: Lister toutes les images Kubernetes
         run: |
-          grep -rhoE 'image: *ghcr\.io/9m7fjfpv9k-cyber/[^ ]+' apps/ | awk '{print $2}' | sort -u > images.txt
+          grep -rhoE '^[[:space:]]*image:[[:space:]]*[^[:space:]]+' apps/ \
+          | sed -E 's/^[[:space:]]*image:[[:space:]]*//' \
+            | sort -u > images.txt
+
           echo "Images à scanner :"
           cat images.txt
+
+          if [ ! -s images.txt ]; then
+          echo "::error::Aucune image Docker trouvée"
+          exit 1
+          fi
+
+    #run: |
+          #grep -rhoE 'image: *ghcr\.io/9m7fjfpv9k-cyber/[^ ]+' apps/ | awk '{print $2}' | sort -u > images.txt
+          #echo "Images à scanner :"
+          #cat images.txt
+        
       - name: Scanner les images (PSSI-R5)
         run: |
           status=0
