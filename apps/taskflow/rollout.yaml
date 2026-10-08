@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: taskflow
-          image: ghcr.io/9m7fjfpv9k-cyber/taskflow:2.0.0
+          image: ghcr.io/9m7fjfpv9k-cyber/taskflow:2.1.0
           ports:
             - name: http
               containerPort: 8000
@@ -44,7 +44,7 @@ spec:
     canary:
       canaryService: taskflow-canary
       steps:
-        - setWeight: 100
+        - setWeight: 25
         - analysis:
             templates:
               - templateName: robustesse-k6
