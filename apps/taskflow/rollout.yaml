@@ -44,8 +44,7 @@ spec:
     canary:
       canaryService: taskflow-canary
       steps:
-        - setWeight: 25
-
+        - setWeight: 100
         - pause:
         - analysis:
             templates:
