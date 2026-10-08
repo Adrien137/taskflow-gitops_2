@@ -1,0 +1,22 @@
+# PSSI-R5 - Exceptions temporaires
+# Justification : images fournies dans le cadre du TP.
+# Risques acceptés temporairement pour les tests pédagogiques.
+# Responsable : binôme du TP
+# Date de réévaluation : 2026-10-31
+# Action prévue : mise à jour des dépendances et des images.
+
+# TaskFlow - Starlette
+CVE-2025-62727
+CVE-2026-48818
+CVE-2026-54283
+
+# TaskFlow - urllib3
+CVE-2025-66418
+CVE-2025-66471
+CVE-2026-21441
+CVE-2026-44431
+CVE-2026-97687
+CVE-2026-97689
+
+# grafana/k6 - OpenSSL
+CVE-2026-14456
